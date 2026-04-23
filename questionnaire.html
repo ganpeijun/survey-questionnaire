@@ -192,6 +192,76 @@
     font-size: 12px; color: #a0aec0;
     margin: -8px 0 12px 0; font-style: italic;
   }
+
+  /* 统计分析样式 */
+  .stats-section { display: none; margin-top: 24px; }
+  .stats-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+  }
+  .stats-header h3 { font-size: 18px; color: #2d3748; margin: 0; }
+  .stats-count { font-size: 14px; color: #718096; }
+  .stat-card {
+    background: white; border: 1.5px solid #e2e8f0;
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+  }
+  .stat-card h4 {
+    font-size: 14px; color: #4a5568; margin: 0 0 12px 0;
+    padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;
+  }
+  .stat-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .stat-bar-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stat-bar-label {
+    font-size: 13px; color: #4a5568; min-width: 120px;
+    word-break: break-all; line-height: 1.3;
+  }
+  .stat-bar-track {
+    flex: 1; height: 22px; background: #edf2f7;
+    border-radius: 6px; overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%; border-radius: 6px;
+    transition: width 0.3s ease;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 11px; font-weight: 600; color: white;
+    min-width: fit-content;
+  }
+  .stat-bar-count {
+    font-size: 12px; color: #718096; min-width: 48px; text-align: right;
+  }
+  .stats-no-data {
+    text-align: center; padding: 48px 16px; color: #a0aec0;
+    font-size: 15px; line-height: 2;
+  }
+  .stats-no-data .big-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+  .stats-back-btn {
+    display: inline-block; padding: 8px 20px;
+    background: #4299e1; color: white; border: none; border-radius: 6px;
+    font-size: 14px; cursor: pointer;
+  }
+  .stats-back-btn:hover { background: #3182ce; }
+  .stat-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .stat-table th {
+    background: #f7fafc; color: #4a5568; font-weight: 600;
+    padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  .stat-table td {
+    padding: 8px 10px; border-bottom: 1px solid #f0f0f0;
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .stat-table tr:hover td { background: #f7fafc; }
+  .stat-table-wrap { overflow-x: auto; }
+  .import-counter {
+    font-size: 13px; color: #48bb78; text-align: center;
+    padding: 8px; margin-bottom: 8px;
+  }
+
 </style>
 </head>
 <body>
@@ -392,9 +462,30 @@
       <button type="button" class="btn btn-success" onclick="saveCSV()">📊 导出 CSV</button>
       <button type="reset" class="btn btn-outline" onclick="clearResult()">🔄 重置</button>
     </div>
+
+    <div class="btn-group" style="margin-top:12px">
+      <button type="button" class="btn btn-warning" onclick="showStats()">📊 查看统计分析</button>
+      <button type="button" class="btn btn-outline" onclick="importJSON()">📂 导入已保存的问卷</button>
+      <button type="button" class="btn btn-outline" onclick="exportAllCSV()">📦 导出全部数据 (CSV)</button>
+      <button type="button" class="btn btn-outline" onclick="confirmClearAll()">🗑️ 清空全部数据</button>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileImport(event)">
   </form>
 
   <div id="result"></div>
+
+  <!-- ====== 统计分析区域 ====== -->
+  <div class="stats-section" id="statsSection">
+    <div class="stats-header">
+      <div>
+        <h3>📊 问卷统计分析</h3>
+        <div class="stats-count" id="statsCount">共 0 份问卷</div>
+      </div>
+      <button class="stats-back-btn" onclick="hideStats()">✕ 关闭统计</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
 </div>
 
 <script>
@@ -560,19 +651,31 @@ function collectData() {
   };
 }
 
-// ============ 自动保存到 localStorage（刷新不丢数据）============
+// ============ 数据存储管理 ============
 
-function autoSave() {
-  const data = collectData();
-  localStorage.setItem('survey_data', JSON.stringify(data));
+const STORAGE_KEY = 'survey_records';
+
+function getAllRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
-// 每5秒自动保存一次
-setInterval(autoSave, 5000);
 
-// ============ 保存为 JSON 文件 ============
+function saveRecord(record) {
+  const records = getAllRecords();
+  record._id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  records.push(record);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  return records.length;
+}
+
+// ============ 保存时自动累积 ============
 
 function saveJSON() {
   const data = collectData();
+  const total = saveRecord(data);
+  // 同时下载单份 JSON
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
@@ -582,54 +685,227 @@ function saveJSON() {
   a.download = `问卷_${merchant}_${timestamp}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-  // 显示成功提示
+
   const resultDiv = document.getElementById('result');
-  resultDiv.textContent = '✅ 数据已保存为 JSON 文件！\n\n文件已自动下载到你的设备，可以微信发送或导入 Excel 分析。\n\n文件命名格式：问卷_商户名_日期时间.json';
+  resultDiv.textContent = `✅ 已保存并累积！ (共 ${total} 份问卷)\n\n单份文件已下载到手机。\n点击下方「📊 查看统计分析」查看所有数据汇总。`;
   resultDiv.style.display = 'block';
   resultDiv.style.background = '#f0fff4';
   resultDiv.style.border = '1px solid #c6f6d5';
 }
 
-// ============ 导出为 CSV（可直接用 Excel 打开）============
+// ============ 导入已保存的 JSON ============
 
-function saveCSV() {
-  const data = collectData();
-  const headers = Object.keys(data);
-  const values = headers.map(h => {
-    let val = String(data[h] || '');
-    // CSV 转义：含逗号/引号/换行的用双引号包裹
-    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-      val = '"' + val.replace(/"/g, '""') + '"';
+function importJSON() {
+  document.getElementById('fileInput').click();
+}
+
+function handleFileImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const total = saveRecord(data);
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = `📂 已导入 1 份问卷！ (累计共 ${total} 份)\n\n点击「📊 查看统计分析」查看汇总结果。`;
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = '#ebf8ff';
+      resultDiv.style.border = '1px solid #90cdf4';
+    } catch {
+      const resultDiv = document.getElementById('result');
+      resultDiv.textContent = '❌ 文件格式错误，请选择之前保存的 JSON 问卷文件。';
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = '#fff5f5';
+      resultDiv.style.border = '1px solid #fc8181';
     }
-    return val;
-  });
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
 
-  const csv = '\uFEFF' + headers.join(',') + '\n' + values.join(',');
+// ============ 导出全部数据 CSV ============
+
+function exportAllCSV() {
+  const records = getAllRecords();
+  if (records.length === 0) {
+    const resultDiv = document.getElementById('result');
+    resultDiv.textContent = '📭 暂无数据，请先填写并保存问卷。';
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fffbeb';
+    resultDiv.style.border = '1px solid #f6c23e';
+    return;
+  }
+
+  const headers = Object.keys(records[0]).filter(h => !h.startsWith('_'));
+  let csv = '\uFEFF' + headers.join(',') + '\n';
+  records.forEach(r => {
+    const vals = headers.map(h => {
+      let val = String(r[h] || '');
+      if (val.includes(',') || val.includes('"') || val.includes('\n'))
+        val = '"' + val.replace(/"/g, '""') + '"';
+      return val;
+    });
+    csv += vals.join(',') + '\n';
+  });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
-  const merchant = data.商户名称位置 ? data.商户名称位置.replace(/[/\\:]/g, '_') : '未命名';
-  a.download = `问卷_${merchant}_${timestamp}.csv`;
+  const now = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+  a.download = `全部问卷_${records.length}份_${now}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 
   const resultDiv = document.getElementById('result');
-  resultDiv.textContent = '✅ 数据已导出为 CSV 文件！\n\n可用 Excel / WPS / 腾讯文档 直接打开。\n每份问卷对应一行数据，方便汇总统计。';
+  resultDiv.textContent = `📦 已导出全部 ${records.length} 份问卷数据！\n\n可用 Excel / WPS 直接打开，进行交叉分析。`;
   resultDiv.style.display = 'block';
   resultDiv.style.background = '#fffbeb';
   resultDiv.style.border = '1px solid #f6c23e';
 }
 
-// ============ 还原之前填过的数据（刷新后恢复）============
+// ============ 清空确认 ============
+
+function confirmClearAll() {
+  if (confirm('⚠️ 确定要清空全部 ${getAllRecords().length} 份问卷数据吗？\n此操作不可恢复！')) {
+    localStorage.removeItem(STORAGE_KEY);
+    const resultDiv = document.getElementById('result');
+    resultDiv.textContent = '🗑️ 已清空全部数据。';
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fff5f5';
+    resultDiv.style.border = '1px solid #fc8181';
+  }
+}
+
+// ============ 统计分析核心 ============
+
+const STAT_COLORS = ['#4299e1', '#48bb78', '#ed8936', '#9f7aea', '#fc8181', '#38b2ac', '#d69e2e', '#667eea', '#f56565', '#00b5d8'];
+
+function freq(arr) {
+  const map = {};
+  arr.forEach(v => {
+    if (!v) return;
+    // 多选题：分号分隔
+    const items = v.split(';').map(s => s.trim()).filter(Boolean);
+    items.forEach(item => { map[item] = (map[item] || 0) + 1; });
+  });
+  return Object.entries(map).sort((a, b) => b[1] - a[1]);
+}
+
+function buildBarChart(data, label) {
+  const total = data.reduce((s, [, c]) => s + c, 0);
+  if (total === 0) return '<div style="color:#a0aec0;font-size:13px;padding:12px;text-align:center">暂无数据</div>';
+  let html = '<div class="stat-bar-wrap">';
+  data.forEach(([name, count], i) => {
+    const pct = ((count / total) * 100).toFixed(0);
+    const color = STAT_COLORS[i % STAT_COLORS.length];
+    html += `<div class="stat-bar-row">
+      <span class="stat-bar-label">${escHtml(name)}</span>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:${pct}%;background:${color}">${pct}%</div>
+      </div>
+      <span class="stat-bar-count">${count}票</span>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ============ 显示统计分析 ============
+
+function showStats() {
+  const records = getAllRecords();
+  const section = document.getElementById('statsSection');
+  const content = document.getElementById('statsContent');
+
+  document.getElementById('statsCount').textContent = `共 ${records.length} 份问卷`;
+
+  if (records.length === 0) {
+    content.innerHTML = `<div class="stats-no-data">
+      <span class="big-icon">📭</span>
+      还没有问卷数据<br>
+      请先填写问卷并点击「💾 保存数据 (JSON)」<br>
+      或点击「📂 导入已保存的问卷」上传之前保存的文件
+    </div>`;
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  // 收集各题数据
+  const q1 = records.map(r => r['经营主要品类']).filter(Boolean);
+  const q2 = records.map(r => r['客户来源']).filter(Boolean);
+  const q3 = records.map(r => r['最大挑战']).filter(Boolean);
+  const q4 = records.map(r => r['宣传方式']).filter(Boolean);
+  const q5 = records.map(r => r['短视频尝试']).filter(Boolean);
+  const q6 = records.map(r => r['短视频困难']).filter(Boolean);
+  const q7 = records.map(r => r['AI认知']).filter(Boolean);
+  const q8 = records.map(r => r['AI工具意愿']).filter(Boolean);
+  const q9 = records.map(r => r['付费意愿']).filter(Boolean);
+  const q10 = records.map(r => r['活动意向']).filter(Boolean);
+  const intent = records.map(r => r['意向度']).filter(Boolean);
+
+  let html = '';
+
+  // [A] 基本信息
+  html += '<div class="stat-card"><h4>🟦 A. 经营品类分布</h4>' + buildBarChart(freq(q1), '经营主要品类') + '</div>';
+  html += '<div class="stat-card"><h4>🟦 A. 客户来源（多选）</h4>' + buildBarChart(freq(q2), '客户来源') + '</div>';
+
+  // [B] 经营痛点
+  html += '<div class="stat-card"><h4>🟧 B. 最大挑战（多选）</h4>' + buildBarChart(freq(q3), '最大挑战') + '</div>';
+  html += '<div class="stat-card"><h4>🟧 B. 宣传方式（多选）</h4>' + buildBarChart(freq(q4), '宣传方式') + '</div>';
+  html += '<div class="stat-card"><h4>🟧 B. 短视频尝试情况</h4>' + buildBarChart(freq(q5), '短视频尝试') + '</div>';
+  html += '<div class="stat-card"><h4>🟧 B. 短视频困难（多选）</h4>' + buildBarChart(freq(q6), '短视频困难') + '</div>';
+
+  // [C] AI工具
+  html += '<div class="stat-card"><h4>🟪 C. AI认知程度</h4>' + buildBarChart(freq(q7), 'AI认知') + '</div>';
+  html += '<div class="stat-card"><h4>🟪 C. AI工具使用意愿</h4>' + buildBarChart(freq(q8), 'AI工具意愿') + '</div>';
+  html += '<div class="stat-card"><h4>🟪 C. 付费意愿分布</h4>' + buildBarChart(freq(q9), '付费意愿') + '</div>';
+
+  // [D] 后续联系 + 意向度
+  html += '<div class="stat-card"><h4>🟩 D. 活动参与意向</h4>' + buildBarChart(freq(q10), '活动意向') + '</div>';
+  html += '<div class="stat-card"><h4>🟩 调查员评估 - 商户意向度</h4>' + buildBarChart(freq(intent), '意向度') + '</div>';
+
+  // 明细表
+  html += '<div class="stat-card"><h4>📋 各问卷明细</h4><div class="stat-table-wrap">';
+  html += '<table class="stat-table"><thead><tr>';
+  const fields = ['提交时间', '经营主要品类', '客户来源', '最大挑战', '宣传方式', '短视频尝试', 'AI认知', 'AI工具意愿', '付费意愿', '活动意向', '联系方式', '商户名称位置', '意向度', '调查员'];
+  html += fields.map(f => `<th>${f}</th>`).join('');
+  html += '</tr></thead><tbody>';
+  records.slice().reverse().forEach(r => {
+    html += '<tr>' + fields.map(f => `<td title="${escHtml(r[f] || '')}">${escHtml((r[f] || '').slice(0, 30))}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  // 底部操作
+  html += `<div style="text-align:center;padding:8px 0 16px">
+    <button class="stats-back-btn" onclick="exportAllCSV()">📦 导出全部数据 (CSV)</button>
+    &nbsp;
+    <button class="stats-back-btn" style="background:#fc8181" onclick="hideStats()">✕ 关闭</button>
+  </div>`;
+
+  content.innerHTML = html;
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideStats() {
+  document.getElementById('statsSection').style.display = 'none';
+}
+
+// ============ 页面加载时检查是否有历史数据 ============
 
 function restoreFromStorage() {
-  const saved = localStorage.getItem('survey_data');
-  if (saved) {
-    const data = JSON.parse(saved);
+  const records = getAllRecords();
+  if (records.length > 0) {
     const resultDiv = document.getElementById('result');
-    resultDiv.textContent = '📂 检测到之前未保存的填写记录，已自动恢复。\n\n建议点击"预览填写结果"确认数据后，点击"💾 保存数据 (JSON)"保存。';
+    resultDiv.textContent = `📂 本地已有 ${records.length} 份已保存的问卷数据。\n\n点击「📊 查看统计分析」查看汇总结果。`;
     resultDiv.style.display = 'block';
     resultDiv.style.background = '#ebf8ff';
     resultDiv.style.border = '1px solid #90cdf4';
