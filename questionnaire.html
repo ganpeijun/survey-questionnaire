@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>糖酒市场商户摸底调查问卷</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f4f8;
+    color: #2d3748;
+    padding: 20px;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 40px 48px;
+  }
+  @media (max-width: 600px) {
+    .container { padding: 24px 20px; }
+  }
+  h1 {
+    font-size: 24px;
+    color: #1a202c;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #718096;
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    padding: 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #4299e1;
+  }
+  h2 {
+    font-size: 18px;
+    color: #2b6cb0;
+    margin: 32px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h2 .badge {
+    display: inline-block;
+    background: #4299e1;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+  }
+  .question {
+    margin-bottom: 24px;
+  }
+  .q-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+  .q-label .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .tag-single { background: #ebf8ff; color: #2b6cb0; }
+  .tag-multi { background: #f0fff4; color: #276749; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .option:hover { border-color: #90cdf4; background: #f7fafc; }
+  .option input:checked + span { color: #2b6cb0; font-weight: 500; }
+  .option:has(input:checked) { border-color: #4299e1; background: #ebf8ff; }
+  .option input[type="radio"], .option input[type="checkbox"] {
+    accent-color: #4299e1; width: 16px; height: 16px; flex-shrink: 0;
+  }
+  .option .other-input {
+    border: none; outline: none; font-size: 14px;
+    border-bottom: 1px dashed #cbd5e0;
+    padding: 2px 8px; flex: 1; min-width: 120px;
+    background: transparent;
+  }
+  .option .other-input:focus { border-bottom-color: #4299e1; }
+  .surveyor-section {
+    margin-top: 32px;
+    padding: 24px;
+    background: #fffbeb;
+    border: 1px dashed #f6c23e;
+    border-radius: 10px;
+  }
+  .surveyor-section h3 {
+    font-size: 14px;
+    color: #92400e;
+    margin-bottom: 16px;
+  }
+  .form-row {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 12px;
+  }
+  .form-field {
+    flex: 1; min-width: 180px;
+  }
+  .form-field label {
+    display: block;
+    font-size: 13px; color: #4a5568;
+    margin-bottom: 4px;
+  }
+  .form-field input, .form-field select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+  }
+  .form-field input:focus, .form-field select:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+  }
+  .intent-group { display: flex; gap: 8px; }
+  .intent-btn {
+    padding: 6px 18px; border: 1.5px solid #e2e8f0;
+    border-radius: 6px; cursor: pointer; font-size: 14px;
+    background: white; transition: all 0.15s;
+  }
+  .intent-btn:hover { border-color: #90cdf4; }
+  .intent-btn.selected-high { background: #c6f6d5; border-color: #48bb78; color: #22543d; }
+  .intent-btn.selected-mid { background: #fefcbf; border-color: #ecc94b; color: #744210; }
+  .intent-btn.selected-low { background: #fed7d7; border-color: #fc8181; color: #742a2a; }
+  .btn-group {
+    display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap;
+  }
+  .btn {
+    flex: 1; min-width: 160px;
+    padding: 14px 24px;
+    border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary {
+    background: #4299e1; color: white;
+  }
+  .btn-primary:hover { background: #3182ce; }
+  .btn-success {
+    background: #48bb78; color: white;
+  }
+  .btn-success:hover { background: #38a169; }
+  .btn-outline {
+    background: white; color: #4a5568;
+    border: 1.5px solid #e2e8f0;
+  }
+  .btn-outline:hover { background: #f7fafc; }
+  #result {
+    display: none;
+    margin-top: 24px;
+    padding: 20px;
+    background: #f0fff4;
+    border: 1px solid #c6f6d5;
+    border-radius: 10px;
+    white-space: pre-wrap;
+    font-size: 13px;
+    font-family: "SF Mono", "Menlo", monospace;
+    line-height: 1.8;
+  }
+  .conditional-note {
+    font-size: 12px; color: #a0aec0;
+    margin: -8px 0 12px 0; font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>📋 糖酒市场商户摸底调查问卷</h1>
+  <div class="subtitle">
+    （您好，我们正在进行一项关于糖酒批发行业经营需求的调研，旨在为您提供更有效的服务。问卷匿名，仅用于统计分析，感谢您的支持！）
+  </div>
+
+  <form id="surveyForm">
+    <!-- A. 基本信息 -->
+    <h2><span class="badge">A</span> 基本信息</h2>
+
+    <div class="question">
+      <div class="q-label">1. 您经营的主要品类是？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q1">
+        <label class="option"><input type="radio" name="q1" value="酒水"><span>酒水</span></label>
+        <label class="option"><input type="radio" name="q1" value="饮料"><span>饮料</span></label>
+        <label class="option"><input type="radio" name="q1" value="粮油"><span>粮油</span></label>
+        <label class="option"><input type="radio" name="q1" value="调味品"><span>调味品</span></label>
+        <label class="option"><input type="radio" name="q1" value="休闲食品"><span>休闲食品</span></label>
+        <label class="option">
+          <input type="radio" name="q1" value="其他">
+          <span>其他</span>
+          <input type="text" class="other-input" placeholder="请注明" data-other="q1" disabled>
+        </label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label">2. 您的客户主要来源是？ <span class="tag tag-multi">可多选</span></div>
+      <div class="options" id="q2">
+        <label class="option"><input type="checkbox" name="q2" value="老客户/熟客介绍"><span>老客户/熟客介绍</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="线下自然客流"><span>线下自然客流</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="主动电话/上门推销"><span>主动电话/上门推销</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="微信/社群接单"><span>微信/社群接单</span></label>
+        <label class="option"><input type="checkbox" name="q2" value="美团/饿了么等本地平台"><span>美团/饿了么等本地平台</span></label>
+        <label class="option">
+          <input type="checkbox" name="q2" value="其他">
+          <span>其他</span>
+          <input type="text" class="other-input" placeholder="请注明" data-other="q2" disabled>
+        </label>
+      </div>
+    </div>
+
+    <!-- B. 经营痛点 -->
+    <h2><span class="badge">B</span> 经营痛点与营销现状</h2>
+
+    <div class="question">
+      <div class="q-label">3. 您目前觉得生意上最大的挑战是什么？ <span class="tag tag-multi">可多选</span></div>
+      <div class="options" id="q3">
+        <label class="option"><input type="checkbox" name="q3" value="新客户难找，生意靠老客"><span>新客户难找，生意靠老客</span></label>
+        <label class="option"><input type="checkbox" name="q3" value="同行价格竞争太激烈"><span>同行价格竞争太激烈</span></label>
+        <label class="option"><input type="checkbox" name="q3" value="线上不会做，跟不上"><span>线上不会做，跟不上</span></label>
+        <label class="option"><input type="checkbox" name="q3" value="人员成本高"><span>人员成本高</span></label>
+        <label class="option"><input type="checkbox" name="q3" value="账期压力大"><span>账期压力大</span></label>
+        <label class="option">
+          <input type="checkbox" name="q3" value="其他">
+          <span>其他</span>
+          <input type="text" class="other-input" placeholder="请注明" data-other="q3" disabled>
+        </label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label">4. 您在宣传推广上，目前主要用什么方式？ <span class="tag tag-multi">可多选</span></div>
+      <div class="options" id="q4">
+        <label class="option"><input type="checkbox" name="q4" value="基本不做推广"><span>基本不做推广</span></label>
+        <label class="option"><input type="checkbox" name="q4" value="发朋友圈"><span>发朋友圈</span></label>
+        <label class="option"><input type="checkbox" name="q4" value="老客户微信群"><span>老客户微信群</span></label>
+        <label class="option"><input type="checkbox" name="q4" value="业务员跑市场"><span>业务员跑市场</span></label>
+        <label class="option"><input type="checkbox" name="q4" value="参加行业展会/品鉴会"><span>参加行业展会/品鉴会</span></label>
+        <label class="option"><input type="checkbox" name="q4" value="投本地广告"><span>投本地广告</span></label>
+        <label class="option">
+          <input type="checkbox" name="q4" value="其他">
+          <span>其他</span>
+          <input type="text" class="other-input" placeholder="请注明" data-other="q4" disabled>
+        </label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label">5. 您是否尝试过在抖音、快手上发视频或开直播推广？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q5">
+        <label class="option"><input type="radio" name="q5" value="经常发，有效果"><span>经常发，有效果</span></label>
+        <label class="option"><input type="radio" name="q5" value="发过，但没什么效果"><span>发过，但没什么效果</span></label>
+        <label class="option"><input type="radio" name="q5" value="想发，但不会拍/不会剪"><span>想发，但不会拍/不会剪</span></label>
+        <label class="option"><input type="radio" name="q5" value="觉得没用，没必要"><span>觉得没用，没必要</span></label>
+        <label class="option"><input type="radio" name="q5" value="没时间弄"><span>没时间弄</span></label>
+      </div>
+    </div>
+
+    <div class="question" id="q6_container" style="display:none;">
+      <div class="q-label">5a. （如果上题选"想发但不会"或"发过没效果"）您觉得做短视频/直播最大的困难是什么？ <span class="tag tag-multi">可多选</span></div>
+      <div class="conditional-note">* 仅当第5题选择对应选项时显示</div>
+      <div class="options" id="q6">
+        <label class="option"><input type="checkbox" name="q6" value="不会拍，不好看"><span>不会拍，不好看</span></label>
+        <label class="option"><input type="checkbox" name="q6" value="不会写吸引人的文案"><span>不会写吸引人的文案</span></label>
+        <label class="option"><input type="checkbox" name="q6" value="没时间弄"><span>没时间弄</span></label>
+        <label class="option"><input type="checkbox" name="q6" value="发了没人看"><span>发了没人看</span></label>
+        <label class="option"><input type="checkbox" name="q6" value="不懂平台规则"><span>不懂平台规则</span></label>
+        <label class="option">
+          <input type="checkbox" name="q6" value="其他">
+          <span>其他</span>
+          <input type="text" class="other-input" placeholder="请注明" data-other="q6" disabled>
+        </label>
+      </div>
+    </div>
+
+    <!-- C. AI认知 -->
+    <h2><span class="badge">C</span> 对AI工具的认知与需求</h2>
+
+    <div class="question">
+      <div class="q-label">6. 您听说过AI（人工智能）可以帮助做生意吗？比如自动写文案、做海报、剪视频？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q7">
+        <label class="option"><input type="radio" name="q7" value="听说过，很感兴趣"><span>听说过，很感兴趣</span></label>
+        <label class="option"><input type="radio" name="q7" value="听说过，但觉得是噱头"><span>听说过，但觉得是噱头</span></label>
+        <label class="option"><input type="radio" name="q7" value="没听说过"><span>没听说过</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label">7. 如果有一款工具，能根据您的产品，一键生成发朋友圈的文案、短视频的剧本和口播稿，您愿意尝试吗？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q8">
+        <label class="option"><input type="radio" name="q8" value="愿意，只要效果好"><span>愿意，只要效果好</span></label>
+        <label class="option"><input type="radio" name="q8" value="可以先免费试试看"><span>可以先免费试试看</span></label>
+        <label class="option"><input type="radio" name="q8" value="操作复杂吗？怕学不会"><span>操作复杂吗？怕学不会</span></label>
+        <label class="option"><input type="radio" name="q8" value="更关心多少钱"><span>更关心多少钱</span></label>
+        <label class="option"><input type="radio" name="q8" value="不需要，我觉得现在的方式挺好"><span>不需要，我觉得现在的方式挺好</span></label>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label">8. 您认为这样一个工具，每月花费多少是您可以接受的？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q9">
+        <label class="option"><input type="radio" name="q9" value="100元以内"><span>100元以内</span></label>
+        <label class="option"><input type="radio" name="q9" value="100-300元"><span>100-300元</span></label>
+        <label class="option"><input type="radio" name="q9" value="300-500元"><span>300-500元</span></label>
+        <label class="option"><input type="radio" name="q9" value="效果好的话，500以上也可以"><span>效果好的话，500以上也可以</span></label>
+        <label class="option"><input type="radio" name="q9" value="先看免费效果"><span>先看免费效果</span></label>
+      </div>
+    </div>
+
+    <!-- D. 后续联系 -->
+    <h2><span class="badge">D</span> 后续联系</h2>
+
+    <div class="question">
+      <div class="q-label">9. 如果我们后续有针对糖酒行业的线下交流会或免费试用活动，您是否愿意参加？ <span class="tag tag-single">单选</span></div>
+      <div class="options" id="q10">
+        <label class="option">
+          <input type="radio" name="q10" value="愿意">
+          <span>愿意，留个联系方式</span>
+          <input type="text" class="other-input" placeholder="微信/电话" data-other="q10" disabled style="flex:1;min-width:180px">
+        </label>
+        <label class="option"><input type="radio" name="q10" value="暂时不用"><span>暂时不用，有需要再找你们（收下名片/资料即可）</span></label>
+      </div>
+    </div>
+
+    <!-- 调查员记录 -->
+    <div class="surveyor-section">
+      <h3>📌 调查员记录栏（商户无需填写）</h3>
+      <div class="form-row">
+        <div class="form-field">
+          <label>商户名称/位置</label>
+          <input type="text" name="s_name" placeholder="例：XX批发市场 3排12号">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>访谈印象（意向度）</label>
+          <div class="intent-group">
+            <button type="button" class="intent-btn" data-intent="高" onclick="selectIntent(this, '高')">高</button>
+            <button type="button" class="intent-btn" data-intent="中" onclick="selectIntent(this, '中')">中</button>
+            <button type="button" class="intent-btn" data-intent="低" onclick="selectIntent(this, '低')">低</button>
+          </div>
+          <input type="hidden" name="s_intent" id="s_intent" value="">
+        </div>
+        <div class="form-field">
+          <label>日期</label>
+          <input type="date" name="s_date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field" style="flex:2">
+          <label>备注（特殊需求/疑虑）</label>
+          <input type="text" name="s_note" placeholder="记录商户的特殊要求或疑虑">
+        </div>
+        <div class="form-field">
+          <label>调查员</label>
+          <input type="text" name="s_investigator" placeholder="姓名">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary" onclick="previewResult()">📄 预览填写结果</button>
+      <button type="reset" class="btn btn-outline" onclick="clearResult()">🔄 重置</button>
+    </div>
+  </form>
+
+  <div id="result"></div>
+</div>
+
+<script>
+function selectIntent(btn, level) {
+  document.querySelectorAll('.intent-btn').forEach(b => {
+    b.className = 'intent-btn';
+  });
+  btn.classList.add('selected-' + level);
+  document.getElementById('s_intent').value = level;
+}
+
+// 其他选项输入框启用/禁用
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'radio' || e.target.type === 'checkbox') {
+    const parent = e.target.closest('.option');
+    if (!parent) return;
+    const otherInput = parent.querySelector('.other-input');
+    if (!otherInput) return;
+    if (e.target.type === 'radio') {
+      otherInput.disabled = !e.target.checked;
+      if (!e.target.checked) otherInput.value = '';
+    } else {
+      otherInput.disabled = !e.target.checked;
+      if (!e.target.checked) otherInput.value = '';
+    }
+  }
+  // 第5题条件逻辑
+  if (e.target.name === 'q5') {
+    const val = e.target.value;
+    const container = document.getElementById('q6_container');
+    if (val === '想发，但不会拍/不会剪' || val === '发过，但没什么效果') {
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+      // 清空子选项
+      document.querySelectorAll('#q6 input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+  }
+});
+
+function getSelected(name) {
+  const els = document.querySelectorAll(`input[name="${name}"]:checked`);
+  return Array.from(els).map(e => {
+    const parent = e.closest('.option');
+    const otherInput = parent?.querySelector('.other-input');
+    const label = e.value === '其他' && otherInput?.value ? '其他：' + otherInput.value : e.value;
+    return label;
+  });
+}
+
+function previewResult() {
+  const q1 = getSelected('q1')[0] || '（未选）';
+  const q2 = getSelected('q2');
+  const q3 = getSelected('q3');
+  const q4 = getSelected('q4');
+  const q5 = getSelected('q5')[0] || '（未选）';
+  const q6 = getSelected('q6');
+  const q7 = getSelected('q7')[0] || '（未选）';
+  const q8 = getSelected('q8')[0] || '（未选）';
+  const q9 = getSelected('q9')[0] || '（未选）';
+  const q10_val = document.querySelector('input[name="q10"]:checked');
+  let q10_text = '（未选）';
+  let q10_contact = '';
+  if (q10_val) {
+    if (q10_val.value === '愿意') {
+      const contact = q10_val.closest('.option').querySelector('.other-input').value;
+      q10_contact = contact ? '联系方式：' + contact : '（未填联系方式）';
+      q10_text = '愿意参加 - ' + q10_contact;
+    } else {
+      q10_text = '暂时不用';
+    }
+  }
+
+  const s_name = document.querySelector('input[name="s_name"]').value || '（未填）';
+  const s_intent = document.getElementById('s_intent').value || '（未选）';
+  const s_note = document.querySelector('input[name="s_note"]').value || '（无）';
+  const s_investigator = document.querySelector('input[name="s_investigator"]').value || '（未填）';
+  const s_date = document.querySelector('input[name="s_date"]').value || '（未填）';
+
+  let output = '═══════════════════════════════════════════\n';
+  output += '  糖酒市场商户摸底调查 - 填写结果\n';
+  output += '═══════════════════════════════════════════\n\n';
+  output += '【A. 基本信息】\n';
+  output += '  1. 经营主要品类：' + q1 + '\n';
+  output += '  2. 客户来源：' + (q2.length ? q2.join('、') : '（未选）') + '\n\n';
+  output += '【B. 经营痛点与营销现状】\n';
+  output += '  3. 最大挑战：' + (q3.length ? q3.join('、') : '（未选）') + '\n';
+  output += '  4. 宣传方式：' + (q4.length ? q4.join('、') : '（未选）') + '\n';
+  output += '  5. 短视频尝试：' + q5 + '\n';
+  if (q6.length) {
+    output += '  5a. 短视频困难：' + q6.join('、') + '\n';
+  }
+  output += '\n【C. 对AI工具的认知与需求】\n';
+  output += '  6. AI认知：' + q7 + '\n';
+  output += '  7. AI工具意愿：' + q8 + '\n';
+  output += '  8. 付费意愿：' + q9 + '\n\n';
+  output += '【D. 后续联系】\n';
+  output += '  9. 活动意向：' + q10_text + '\n\n';
+  output += '═══════ 调查员记录 ═══════\n';
+  output += '  商户名称/位置：' + s_name + '\n';
+  output += '  意向度：' + s_intent + '\n';
+  output += '  备注：' + s_note + '\n';
+  output += '  调查员：' + s_investigator + '\n';
+  output += '  日期：' + s_date + '\n';
+  output += '═══════════════════════════════════════════\n';
+
+  const resultDiv = document.getElementById('result');
+  resultDiv.textContent = output;
+  resultDiv.style.display = 'block';
+  resultDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearResult() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('q6_container').style.display = 'none';
+  document.querySelectorAll('.other-input').forEach(i => i.disabled = true);
+  document.querySelectorAll('.intent-btn').forEach(b => b.className = 'intent-btn');
+  document.getElementById('s_intent').value = '';
+}
+</script>
+</body>
+</html>
