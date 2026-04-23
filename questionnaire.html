@@ -167,6 +167,10 @@
     background: #48bb78; color: white;
   }
   .btn-success:hover { background: #38a169; }
+  .btn-warning {
+    background: #ed8936; color: white;
+  }
+  .btn-warning:hover { background: #dd6b20; }
   .btn-outline {
     background: white; color: #4a5568;
     border: 1.5px solid #e2e8f0;
@@ -384,6 +388,8 @@
 
     <div class="btn-group">
       <button type="button" class="btn btn-primary" onclick="previewResult()">📄 预览填写结果</button>
+      <button type="button" class="btn btn-success" onclick="saveJSON()">💾 保存数据 (JSON)</button>
+      <button type="button" class="btn btn-success" onclick="saveCSV()">📊 导出 CSV</button>
       <button type="reset" class="btn btn-outline" onclick="clearResult()">🔄 重置</button>
     </div>
   </form>
@@ -507,7 +513,131 @@ function clearResult() {
   document.querySelectorAll('.other-input').forEach(i => i.disabled = true);
   document.querySelectorAll('.intent-btn').forEach(b => b.className = 'intent-btn');
   document.getElementById('s_intent').value = '';
+  localStorage.removeItem('survey_data');
 }
+
+// ============ 数据收集函数 ============
+
+function collectData() {
+  const q1 = getSelected('q1')[0] || '';
+  const q2 = getSelected('q2');
+  const q3 = getSelected('q3');
+  const q4 = getSelected('q4');
+  const q5 = getSelected('q5')[0] || '';
+  const q6 = getSelected('q6');
+  const q7 = getSelected('q7')[0] || '';
+  const q8 = getSelected('q8')[0] || '';
+  const q9 = getSelected('q9')[0] || '';
+
+  const q10_val = document.querySelector('input[name="q10"]:checked');
+  let q10_selected = '';
+  let q10_contact = '';
+  if (q10_val) {
+    q10_selected = q10_val.value;
+    if (q10_selected === '愿意') {
+      q10_contact = q10_val.closest('.option').querySelector('.other-input').value || '';
+    }
+  }
+
+  return {
+    提交时间: new Date().toLocaleString('zh-CN', { hour12: false }),
+    经营主要品类: q1,
+    客户来源: q2.join('; '),
+    最大挑战: q3.join('; '),
+    宣传方式: q4.join('; '),
+    短视频尝试: q5,
+    短视频困难: q6.join('; '),
+    AI认知: q7,
+    AI工具意愿: q8,
+    付费意愿: q9,
+    活动意向: q10_selected === '愿意' ? '愿意参加' : (q10_selected === '暂时不用' ? '暂时不用' : ''),
+    联系方式: q10_contact,
+    商户名称位置: document.querySelector('input[name="s_name"]').value || '',
+    意向度: document.getElementById('s_intent').value || '',
+    备注: document.querySelector('input[name="s_note"]').value || '',
+    调查员: document.querySelector('input[name="s_investigator"]').value || '',
+    日期: document.querySelector('input[name="s_date"]').value || ''
+  };
+}
+
+// ============ 自动保存到 localStorage（刷新不丢数据）============
+
+function autoSave() {
+  const data = collectData();
+  localStorage.setItem('survey_data', JSON.stringify(data));
+}
+// 每5秒自动保存一次
+setInterval(autoSave, 5000);
+
+// ============ 保存为 JSON 文件 ============
+
+function saveJSON() {
+  const data = collectData();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+  const merchant = data.商户名称位置 ? data.商户名称位置.replace(/[/\\:]/g, '_') : '未命名';
+  a.download = `问卷_${merchant}_${timestamp}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  // 显示成功提示
+  const resultDiv = document.getElementById('result');
+  resultDiv.textContent = '✅ 数据已保存为 JSON 文件！\n\n文件已自动下载到你的设备，可以微信发送或导入 Excel 分析。\n\n文件命名格式：问卷_商户名_日期时间.json';
+  resultDiv.style.display = 'block';
+  resultDiv.style.background = '#f0fff4';
+  resultDiv.style.border = '1px solid #c6f6d5';
+}
+
+// ============ 导出为 CSV（可直接用 Excel 打开）============
+
+function saveCSV() {
+  const data = collectData();
+  const headers = Object.keys(data);
+  const values = headers.map(h => {
+    let val = String(data[h] || '');
+    // CSV 转义：含逗号/引号/换行的用双引号包裹
+    if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+      val = '"' + val.replace(/"/g, '""') + '"';
+    }
+    return val;
+  });
+
+  const csv = '\uFEFF' + headers.join(',') + '\n' + values.join(',');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+  const merchant = data.商户名称位置 ? data.商户名称位置.replace(/[/\\:]/g, '_') : '未命名';
+  a.download = `问卷_${merchant}_${timestamp}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  const resultDiv = document.getElementById('result');
+  resultDiv.textContent = '✅ 数据已导出为 CSV 文件！\n\n可用 Excel / WPS / 腾讯文档 直接打开。\n每份问卷对应一行数据，方便汇总统计。';
+  resultDiv.style.display = 'block';
+  resultDiv.style.background = '#fffbeb';
+  resultDiv.style.border = '1px solid #f6c23e';
+}
+
+// ============ 还原之前填过的数据（刷新后恢复）============
+
+function restoreFromStorage() {
+  const saved = localStorage.getItem('survey_data');
+  if (saved) {
+    const data = JSON.parse(saved);
+    const resultDiv = document.getElementById('result');
+    resultDiv.textContent = '📂 检测到之前未保存的填写记录，已自动恢复。\n\n建议点击"预览填写结果"确认数据后，点击"💾 保存数据 (JSON)"保存。';
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#ebf8ff';
+    resultDiv.style.border = '1px solid #90cdf4';
+  }
+}
+
+// 页面加载时自动恢复
+window.addEventListener('DOMContentLoaded', restoreFromStorage);
 </script>
 </body>
 </html>
